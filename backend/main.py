@@ -1,19 +1,25 @@
 import json
 import logging
+import os
+import re
+import secrets
 import shutil
+import sqlite3
 import threading
 import uuid
 import zipfile
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from contextlib import asynccontextmanager, closing
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Optional
 
-
-from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
-from pydantic import BaseModel, Field
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+import bcrypt
+import jwt
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, Field
 from ultralytics import YOLO
 
 logger = logging.getLogger("ai_dataset_platform")
@@ -40,6 +46,94 @@ model = None
 model_lock = threading.Lock()   # only one prediction at a time
 jobs_lock = threading.Lock()    # protects job JSON files
 
+# ---------- auth helpers ----------
+
+DB_PATH = BASE_DIR / "users.db"
+SECRET_FILE = BASE_DIR / "jwt_secret.key"
+TOKEN_HOURS = 24
+bearer = HTTPBearer(auto_error=False)
+DUMMY_HASH = bcrypt.hashpw(b"dummy-password", bcrypt.gensalt())
+
+
+def load_secret() -> str:
+    env_secret = os.getenv("JWT_SECRET")
+    if env_secret:
+        return env_secret
+    if SECRET_FILE.exists():
+        return SECRET_FILE.read_text(encoding="utf-8").strip()
+    value = secrets.token_hex(32)
+    SECRET_FILE.write_text(value, encoding="utf-8")
+    return value
+
+
+JWT_SECRET = load_secret()
+
+
+def db_connect():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db() -> None:
+    with closing(db_connect()) as conn:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )"""
+        )
+        conn.commit()
+
+
+def db_query_one(sql, params=()):
+    with closing(db_connect()) as conn:
+        return conn.execute(sql, params).fetchone()
+
+
+def db_execute(sql, params=()):
+    with closing(db_connect()) as conn:
+        conn.execute(sql, params)
+        conn.commit()
+
+
+def make_session(user: dict) -> dict:
+    payload = {
+        "sub": user["id"],
+        "exp": datetime.now(timezone.utc) + timedelta(hours=TOKEN_HOURS),
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    return {
+        "token": token,
+        "user": {"id": user["id"], "email": user["email"], "name": user["name"]},
+    }
+
+
+def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer),
+) -> dict:
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=["HS256"])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    row = db_query_one(
+        "SELECT id, email, name FROM users WHERE id = ?", (payload.get("sub"),)
+    )
+    if row is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return dict(row)
+
+
+def get_owned_job(job_id: str, user: dict) -> dict:
+    job = read_job(job_id)
+    if job.get("owner_id") != user["id"]:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
 
 # ---------- helpers ----------
 
@@ -275,13 +369,13 @@ def run_inference_job(job_id: str) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
+    init_db()
     if MODEL_PATH.exists():
         model = YOLO(str(MODEL_PATH))
     else:
         logger.error("Model file not found: %s", MODEL_PATH)
     mark_stale_jobs()
     yield
-
 
 app = FastAPI(title="AI Dataset Platform API", lifespan=lifespan)
 
@@ -320,8 +414,78 @@ def get_models():
     }
 
 
+# ---------- auth endpoints ----------
+
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/api/auth/register", status_code=201)
+def register(payload: RegisterRequest):
+    name = payload.name.strip()
+    email = payload.email.strip().lower()
+    password_bytes = payload.password.encode("utf-8")
+
+    if not name or len(name) > 80:
+        raise HTTPException(status_code=400, detail="Enter your name")
+    if len(email) > 254 or not EMAIL_PATTERN.match(email):
+        raise HTTPException(status_code=400, detail="Enter a valid email address")
+    if len(payload.password) < 8:
+        raise HTTPException(
+            status_code=400, detail="Password must be at least 8 characters"
+        )
+    if len(password_bytes) > 72:
+        raise HTTPException(status_code=400, detail="Password is too long")
+
+    user = {"id": str(uuid.uuid4()), "email": email, "name": name}
+    password_hash = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
+    try:
+        db_execute(
+            "INSERT INTO users (id, email, name, password_hash, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (user["id"], email, name, password_hash, now_iso()),
+        )
+    except sqlite3.IntegrityError:
+        raise HTTPException(
+            status_code=409, detail="An account with this email already exists"
+        )
+    return make_session(user)
+
+
+@app.post("/api/auth/login")
+def login(payload: LoginRequest):
+    email = payload.email.strip().lower()
+    password_bytes = payload.password.encode("utf-8")
+    row = db_query_one(
+        "SELECT id, email, name, password_hash FROM users WHERE email = ?", (email,)
+    )
+    stored_hash = row["password_hash"].encode("utf-8") if row else DUMMY_HASH
+
+    password_ok = len(password_bytes) <= 72 and bcrypt.checkpw(
+        password_bytes, stored_hash
+    )
+    if row is None or not password_ok:
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    return make_session(dict(row))
+
+
+# ---------- datasets and jobs (login required) ----------
+
 @app.post("/api/upload")
-def upload_dataset(file: UploadFile = File(...)):
+def upload_dataset(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
+):
     if not (file.filename or "").lower().endswith(".zip"):
         raise HTTPException(status_code=400, detail="Only ZIP files are allowed")
 
@@ -351,10 +515,11 @@ def upload_dataset(file: UploadFile = File(...)):
     finally:
         file.file.close()
 
-    zip_path.unlink(missing_ok=True)  # extracted folder is enough
+    zip_path.unlink(missing_ok=True)
 
     job = {
         "id": job_id,
+        "owner_id": user["id"],
         "model_id": None,
         "model_name": None,
         "status": "UPLOADED",
@@ -375,6 +540,8 @@ def upload_dataset(file: UploadFile = File(...)):
         "message": "ZIP uploaded successfully",
         "total_images": len(images),
     }
+
+
 class StartJobRequest(BaseModel):
     model_id: str = MODEL_ID
     options: dict = Field(default_factory=dict)
@@ -384,14 +551,19 @@ start_lock = threading.Lock()
 
 
 @app.post("/api/jobs/{job_id}/start")
-def start_job(job_id: str, payload: StartJobRequest, background_tasks: BackgroundTasks):
+def start_job(
+    job_id: str,
+    payload: StartJobRequest,
+    background_tasks: BackgroundTasks,
+    user: dict = Depends(get_current_user),
+):
     if payload.model_id != MODEL_ID:
         raise HTTPException(status_code=400, detail="Unknown model")
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     with start_lock:
-        job = read_job(job_id)
+        job = get_owned_job(job_id, user)
         if job["status"] != "UPLOADED":
             raise HTTPException(status_code=409, detail="Job was already started")
         job = update_job(
@@ -406,36 +578,39 @@ def start_job(job_id: str, payload: StartJobRequest, background_tasks: Backgroun
     background_tasks.add_task(run_inference_job, job["id"])
     return job
 
+
 @app.get("/api/jobs")
-def list_jobs():
+def list_jobs(user: dict = Depends(get_current_user)):
     jobs = []
     for path in JOBS_DIR.glob("*.json"):
         try:
             with jobs_lock:
-                jobs.append(json.loads(path.read_text(encoding="utf-8")))
+                job = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
+        if job.get("owner_id") == user["id"]:
+            jobs.append(job)
     jobs.sort(key=lambda job: job.get("created_at", ""), reverse=True)
     return jobs
 
 
 @app.get("/api/jobs/{job_id}")
-def get_job(job_id: str):
-    return read_job(job_id)
+def get_job(job_id: str, user: dict = Depends(get_current_user)):
+    return get_owned_job(job_id, user)
 
 
 @app.delete("/api/jobs/{job_id}", status_code=204)
-def delete_job(job_id: str):
-    job = read_job(job_id)
-    if job["status"] in {"PROCESSING", "PACKAGING"}:
+def delete_job(job_id: str, user: dict = Depends(get_current_user)):
+    job = get_owned_job(job_id, user)
+    if job["status"] in {"QUEUED", "PROCESSING", "PACKAGING"}:
         raise HTTPException(status_code=409, detail="Job is still running")
     remove_job_files(job["id"])
     job_path(job["id"]).unlink(missing_ok=True)
 
 
 @app.get("/api/jobs/{job_id}/predictions")
-def get_predictions(job_id: str):
-    job = read_job(job_id)
+def get_predictions(job_id: str, user: dict = Depends(get_current_user)):
+    job = get_owned_job(job_id, user)
     path = RESULTS_DIR / job["id"] / "predictions.json"
     if job["status"] != "COMPLETED" or not path.exists():
         raise HTTPException(status_code=409, detail="Results are not ready")
@@ -443,8 +618,8 @@ def get_predictions(job_id: str):
 
 
 @app.get("/api/jobs/{job_id}/result")
-def download_result(job_id: str):
-    job = read_job(job_id)
+def download_result(job_id: str, user: dict = Depends(get_current_user)):
+    job = get_owned_job(job_id, user)
     path = RESULTS_DIR / job["id"] / "result.zip"
     if job["status"] != "COMPLETED" or not path.exists():
         raise HTTPException(status_code=409, detail="Results are not ready")

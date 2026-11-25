@@ -1,5 +1,5 @@
 
-import { API_BASE_URL, USE_MOCK } from "../config";
+import { API_BASE_URL, USE_MOCK, USE_MOCK_AUTH } from "../config";
 import { getSession } from "../services/authService";
 import { createMockResultZip } from "./mockZip";
 
@@ -298,8 +298,8 @@ function uploadRequest(file, onProgress) {
 
 export const api = {
   async register({ name, email, password }) {
-    if (!USE_MOCK) {
-      return requestJson("/auth/register", {
+    if (!USE_MOCK_AUTH) {
+      return requestJson("/api/auth/register", {
         method: "POST",
         body: JSON.stringify({ name, email, password }),
       });
@@ -310,8 +310,8 @@ export const api = {
   },
 
   async login({ email, password }) {
-    if (!USE_MOCK) {
-      return requestJson("/auth/login", {
+    if (!USE_MOCK_AUTH) {
+      return requestJson("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
