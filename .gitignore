@@ -1,0 +1,10 @@
+﻿# backend
+backend/venv/
+backend/uploads/
+backend/results/
+backend/jobs/
+__pycache__/
+*.pyc
+
+# env files (real ones only)
+.env
