@@ -1,0 +1,17 @@
+{
+  "job_id": "fe83ff4a-f9c9-4561-b80b-b78e623d5651",
+  "model": "Project Model",
+  "options": {
+    "confidence_threshold": 0.25,
+    "image_size": 640
+  },
+  "total_images": 26,
+  "processed_images": 26,
+  "failed_images": 0,
+  "images_with_detections": 14,
+  "total_detections": 24,
+  "class_counts": {
+    "not-overlap": 19,
+    "overlap": 5
+  }
+}

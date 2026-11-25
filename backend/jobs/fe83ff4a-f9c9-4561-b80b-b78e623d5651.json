@@ -1,0 +1,33 @@
+{
+  "id": "fe83ff4a-f9c9-4561-b80b-b78e623d5651",
+  "model_id": "local-map89",
+  "model_name": "Project Model",
+  "status": "COMPLETED",
+  "progress": 100,
+  "created_at": "2026-11-25T11:21:42.506697+00:00",
+  "completed_at": "2026-11-25T11:21:56.421222+00:00",
+  "error_message": null,
+  "file_name": "Tur.zip",
+  "options": {
+    "confidence_threshold": 0.25,
+    "image_size": 640
+  },
+  "total_images": 26,
+  "summary": {
+    "job_id": "fe83ff4a-f9c9-4561-b80b-b78e623d5651",
+    "model": "Project Model",
+    "options": {
+      "confidence_threshold": 0.25,
+      "image_size": 640
+    },
+    "total_images": 26,
+    "processed_images": 26,
+    "failed_images": 0,
+    "images_with_detections": 14,
+    "total_detections": 24,
+    "class_counts": {
+      "not-overlap": 19,
+      "overlap": 5
+    }
+  }
+}

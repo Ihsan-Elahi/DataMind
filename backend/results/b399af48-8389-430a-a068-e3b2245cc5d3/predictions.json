@@ -1,0 +1,384 @@
+[
+  {
+    "image": "Tur/IMG-20250820-WA0004.jpeg",
+    "detections": []
+  },
+  {
+    "image": "Tur/IMG-20250822-WA0005.jpeg",
+    "detections": []
+  },
+  {
+    "image": "Tur/IMG-20250823-WA0004.jpeg",
+    "detections": [
+      {
+        "class_id": 1,
+        "class_name": "overlap",
+        "confidence": 0.3848,
+        "box": [
+          1189.43,
+          871.22,
+          1473.82,
+          964.56
+        ]
+      },
+      {
+        "class_id": 1,
+        "class_name": "overlap",
+        "confidence": 0.2786,
+        "box": [
+          386.63,
+          280.33,
+          534.18,
+          741.39
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0047.jpg",
+    "detections": []
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0048.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.3466,
+        "box": [
+          838.5,
+          516.37,
+          910.55,
+          583.31
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0049.jpg",
+    "detections": []
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0050.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2654,
+        "box": [
+          160.51,
+          737.21,
+          334.04,
+          1163.69
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0051.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2561,
+        "box": [
+          686.42,
+          340.83,
+          963.0,
+          690.97
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0052.jpg",
+    "detections": [
+      {
+        "class_id": 1,
+        "class_name": "overlap",
+        "confidence": 0.467,
+        "box": [
+          293.18,
+          0.0,
+          434.92,
+          32.29
+        ]
+      },
+      {
+        "class_id": 1,
+        "class_name": "overlap",
+        "confidence": 0.2615,
+        "box": [
+          409.93,
+          151.83,
+          463.29,
+          201.32
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0053.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2541,
+        "box": [
+          43.69,
+          1144.73,
+          245.11,
+          1280.0
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0054.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.4891,
+        "box": [
+          0.69,
+          1217.06,
+          118.2,
+          1280.0
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.3873,
+        "box": [
+          191.05,
+          1210.46,
+          337.67,
+          1280.0
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.3747,
+        "box": [
+          35.31,
+          985.96,
+          131.93,
+          1073.87
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.3622,
+        "box": [
+          24.74,
+          982.72,
+          200.33,
+          1214.3
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0055.jpg",
+    "detections": []
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0056.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.4265,
+        "box": [
+          300.5,
+          824.31,
+          542.75,
+          1109.58
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0057.jpg",
+    "detections": []
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0058.jpg",
+    "detections": [
+      {
+        "class_id": 1,
+        "class_name": "overlap",
+        "confidence": 0.4518,
+        "box": [
+          728.91,
+          651.82,
+          787.12,
+          680.9
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.3394,
+        "box": [
+          126.35,
+          229.84,
+          174.02,
+          323.04
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0059.jpg",
+    "detections": []
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0060.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.4985,
+        "box": [
+          397.78,
+          1024.48,
+          552.79,
+          1277.55
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.4909,
+        "box": [
+          46.8,
+          1237.89,
+          216.3,
+          1280.0
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0061.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.4531,
+        "box": [
+          840.86,
+          762.86,
+          963.0,
+          1160.46
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2813,
+        "box": [
+          356.35,
+          789.56,
+          508.81,
+          1075.29
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/IMG-20250826-WA0062.jpg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2704,
+        "box": [
+          508.74,
+          838.09,
+          720.0,
+          1310.1
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/WhatsApp Image 2026-06-07 at 7.03.06 PM.jpeg",
+    "detections": []
+  },
+  {
+    "image": "Tur/WhatsApp Image 2026-06-07 at 7.06.38 PM.jpeg",
+    "detections": []
+  },
+  {
+    "image": "Tur/WhatsApp Image 2026-06-07 at 7.19.49 PM.jpeg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.3827,
+        "box": [
+          534.66,
+          978.84,
+          614.44,
+          1100.01
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/WhatsApp Image 2026-06-07 at 7.21.14 PM (1).jpeg",
+    "detections": []
+  },
+  {
+    "image": "Tur/WhatsApp Image 2026-06-07 at 7.21.14 PM.jpeg",
+    "detections": [
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2976,
+        "box": [
+          606.65,
+          358.39,
+          744.76,
+          506.05
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2664,
+        "box": [
+          1110.68,
+          306.93,
+          1226.27,
+          706.65
+        ]
+      },
+      {
+        "class_id": 0,
+        "class_name": "not-overlap",
+        "confidence": 0.2647,
+        "box": [
+          615.63,
+          355.29,
+          797.07,
+          646.54
+        ]
+      }
+    ]
+  },
+  {
+    "image": "Tur/WhatsApp Image 2026-06-07 at 7.21.15 PM (1).jpeg",
+    "detections": []
+  },
+  {
+    "image": "Tur/WhatsApp Image 2026-06-07 at 7.21.15 PM.jpeg",
+    "detections": []
+  }
+]
